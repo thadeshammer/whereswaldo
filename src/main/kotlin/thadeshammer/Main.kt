@@ -2,11 +2,8 @@ package thadeshammer
 
 import org.openimaj.image.ImageUtilities
 import org.openimaj.image.MBFImage
-import org.openimaj.image.processor.PixelProcessor
-import thadeshammer.experimentalcode.ModelBuildingUtil.bias
-import thadeshammer.experimentalcode.ModelBuildingUtil.tooClose
 import thadeshammer.experimentalcode.WaldoFinder
-import thadeshammer.experimentalcode.ModelBuildingUtil
+import thadeshammer.experimentalcode.WaldoUtil
 import thadeshammer.model.Model
 import thadeshammer.model.ModelComponent
 import java.io.File
@@ -30,20 +27,7 @@ fun main(args: Array<String>) {
         name = "waldoRedComponent",
         originalImage = waldoSourceImage,
         pixelTransforms = listOf(
-            PixelProcessor {
-                if (tooClose(it[ModelBuildingUtil.RED],
-                    it[ModelBuildingUtil.BLUE],
-                    0.3f)) {
-                    it[ModelBuildingUtil.RED] = 0.0f
-                } else {
-                    it[ModelBuildingUtil.RED] = bias(it[ModelBuildingUtil.RED], 0.95f)
-                }
-
-                it[ModelBuildingUtil.GREEN] = 0.0f
-                it[ModelBuildingUtil.BLUE] = 0.0f
-
-                it
-            }
+            WaldoUtil.redComponentPPv1
         ),
         imageTransforms = listOf()
     )
@@ -52,25 +36,12 @@ fun main(args: Array<String>) {
         name = "waldoRedComponent",
         originalImage = waldoSourceImage,
         pixelTransforms = listOf(
-            PixelProcessor {
-                if (tooClose(it[ModelBuildingUtil.BLUE],
-                    it[ModelBuildingUtil.RED],
-                    0.3f)) {
-                    it[ModelBuildingUtil.BLUE] = 0.0f
-                } else {
-                    it[ModelBuildingUtil.BLUE] = bias(it[ModelBuildingUtil.BLUE], 0.7f)
-                }
-
-                it[ModelBuildingUtil.RED] = 0.0f
-                it[ModelBuildingUtil.GREEN] = 0.0f
-
-                it
-            }
+            WaldoUtil.blueComponentPPv1
         ),
         imageTransforms = listOf()
     )
 
-    val model = Model(
+    val modelRB = Model(
         name = "waldoModel1",
         components = listOf(
             waldoRedComponent,
@@ -78,10 +49,30 @@ fun main(args: Array<String>) {
         )
     )
 
-    val finder = WaldoFinder(model)
-    finder.scanImage(
+    println("=== VS RAW IMAGE ===")
+    val finderVSRawImage = WaldoFinder(modelRB)
+    finderVSRawImage.scanImageConcurrent(
         ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
     )
+
+    println("=== VS RB COMPONENT TRANSFORMED IMAGE ===")
+    val finderVSComponentTransformImage = WaldoFinder(modelRB)
+    val redImage = ImageUtilities
+        .readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+        .processInplace(WaldoUtil.redComponentPPv1)
+    val blueImage = ImageUtilities
+        .readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+        .processInplace(WaldoUtil.blueComponentPPv1)
+    val componentTransformImage = redImage.subtract(blueImage).abs()
+
+    finderVSComponentTransformImage.scanImageConcurrent(
+        componentTransformImage
+    )
+
+
+//    val testimg = ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+//    val sample = testimg.extractROI(0,0,200,200)
+//    DisplayUtilities.display(sample)
 
     /*
         TODO figure out proportions of waldo in images (i.e. find waldo and boundbox him

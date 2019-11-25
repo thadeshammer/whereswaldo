@@ -6,5 +6,7 @@ package thadeshammer.experimentalcode
 data class ScoreKeeper(
     val score: Double,
     val x: Int,
-    val y: Int
+    val y: Int,
+    val width: Int,
+    val height: Int
 )
