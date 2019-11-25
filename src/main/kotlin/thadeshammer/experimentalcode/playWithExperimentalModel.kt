@@ -211,9 +211,9 @@ class playWithExperimentalModel(
             )
         )
 
-        println("model vs model: ${model.compare(model)}")
-        println("model vs original: ${model.compare(waldoSourceImage)}")
-        println("model vs white: ${model.compare(allWhite)}")
+        println("model vs model: ${model.naiveCompare(model)}")
+        println("model vs original: ${model.naiveCompare(waldoSourceImage)}")
+        println("model vs white: ${model.naiveCompare(allWhite)}")
 
     }
 }

@@ -40,7 +40,7 @@ data class Model(
      *
      * TODO try this
      */
-    fun compare(other: Model): Double {
+    fun naiveCompare(other: Model): Double {
         return this.fullModel
             .subtract(other.fullModel)
             .abs()
@@ -48,7 +48,7 @@ data class Model(
             .sum()
     }
 
-    fun compare(other: MBFImage): Double {
+    fun naiveCompare(other: MBFImage): Double {
         return this.fullModel
             .subtract(other)
             .abs()

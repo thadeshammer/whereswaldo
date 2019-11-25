@@ -40,7 +40,7 @@ class WaldoFinder(
             for (y in 0 until image.height-sampleHeight step 2) {
                 for (x in 0 until image.width-sampleWidth step 2) {
                     image.extractROI(x, y, sampleBuffer)
-                    val score = model.compare(sampleBuffer)
+                    val score = model.naiveCompare(sampleBuffer)
                     scoreList += ScoreKeeper(score, x, y, sampleWidth, sampleHeight)
 
                     if (y % 100 == 0 && lastY != y) {
@@ -92,7 +92,7 @@ class WaldoFinder(
             for (y in 0 until image.height-sampleHeight step 4) runBlocking {
                 for (x in 0 until image.width-sampleWidth step 4) {
                     image.extractROI(x, y, sampleBuffer)
-                    val score = model.compare(sampleBuffer)
+                    val score = model.naiveCompare(sampleBuffer)
 
                     mutex.withLock {
                         scoreList += ScoreKeeper(score, x, y, sampleWidth, sampleHeight)
@@ -105,7 +105,8 @@ class WaldoFinder(
             }
         }
 
-        val trimmedScores = WaldoUtil.trimScoreList(scoreList.sortedBy { it.score })
+//        val trimmedScores = WaldoUtil.trimScoreList(scoreList.sortedBy { it.score })
+        val trimmedScores = WaldoUtil.thoroughTrimScoreList(scoreList)
 
         val durationStr = String.format(
             "%d min, %d sec",

@@ -2,10 +2,15 @@ package thadeshammer
 
 import org.openimaj.image.ImageUtilities
 import org.openimaj.image.MBFImage
+import org.openimaj.image.pixel.statistics.HistogramModel
+
+
 import thadeshammer.experimentalcode.WaldoFinder
+import thadeshammer.experimentalcode.WaldoHistogramFinder
 import thadeshammer.experimentalcode.WaldoUtil
 import thadeshammer.model.Model
 import thadeshammer.model.ModelComponent
+
 import java.io.File
 
 fun main(args: Array<String>) {
@@ -13,15 +18,9 @@ fun main(args: Array<String>) {
 
     var waldoSourceImage: MBFImage = ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\wm2.bmp"))
 
-//    var pixel = image.getPixel(0,0)
-//
-//    println("pixel size: ${pixel.size}")
-//    println("pixel data: ${pixel.asList()}")
-
-    //    DisplayUtilities.display(image)
-
-//    val finder = playWithExperimentalModel(waldoModelSourceImage)
-//    finder.doItBetter()
+    /*
+        naive RedBlue component model
+     */
 
     val waldoRedComponent = ModelComponent(
         name = "waldoRedComponent",
@@ -49,30 +48,65 @@ fun main(args: Array<String>) {
         )
     )
 
-    println("=== VS RAW IMAGE ===")
-    val finderVSRawImage = WaldoFinder(modelRB)
-    finderVSRawImage.scanImageConcurrent(
+//    println("=== VS RAW IMAGE ===")
+//    val finderVSRawImage = WaldoFinder(modelRB)
+//    finderVSRawImage.scanImageConcurrent(
+//        ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+//    )
+//
+//    println("=== VS RB COMPONENT TRANSFORMED IMAGE ===")
+//    val finderVSComponentTransformImage = WaldoFinder(modelRB)
+//    val redImage = ImageUtilities
+//        .readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+//        .processInplace(WaldoUtil.redComponentPPv1)
+//    val blueImage = ImageUtilities
+//        .readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+//        .processInplace(WaldoUtil.blueComponentPPv1)
+//    val componentTransformImage = redImage.subtract(blueImage).abs()
+//
+//    finderVSComponentTransformImage.scanImageConcurrent(
+//        componentTransformImage
+//    )
+
+    /*
+        So this finds Waldo at rank #16     :(
+        16: ScoreKeeper(score=0.5593389518050591, x=832, y=564, width=102, height=188)
+     */
+    println("=== VS RAW-GEN OVERFIT HISTOGRAM ===")
+    val hm = HistogramModel(
+        waldoSourceImage.width,
+        waldoSourceImage.height,
+        3
+    )
+    hm.estimateModel(waldoSourceImage)
+    val rawGenHistogramOverFit = hm.histogram
+
+    val histoOverFitFinder = WaldoHistogramFinder(
+        rawGenHistogramOverFit,
+        waldoSourceImage.width, waldoSourceImage.height,
+        Triple(waldoSourceImage.width, waldoSourceImage.height, 3)
+    )
+    histoOverFitFinder.scanImage(
         ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
     )
 
-    println("=== VS RB COMPONENT TRANSFORMED IMAGE ===")
-    val finderVSComponentTransformImage = WaldoFinder(modelRB)
-    val redImage = ImageUtilities
-        .readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
-        .processInplace(WaldoUtil.redComponentPPv1)
-    val blueImage = ImageUtilities
-        .readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
-        .processInplace(WaldoUtil.blueComponentPPv1)
-    val componentTransformImage = redImage.subtract(blueImage).abs()
-
-    finderVSComponentTransformImage.scanImageConcurrent(
-        componentTransformImage
+    println("=== VS RAW-GEN CANONICAL-STEVE HISTOGRAM ===")
+    val hm2 = HistogramModel(
+        4,
+        4,
+        3
     )
+    hm2.estimateModel(waldoSourceImage)
+    val rawGenHistogram = hm2.histogram
 
-
-//    val testimg = ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
-//    val sample = testimg.extractROI(0,0,200,200)
-//    DisplayUtilities.display(sample)
+    val histoFinder = WaldoHistogramFinder(
+        rawGenHistogram,
+        waldoSourceImage.width, waldoSourceImage.height,
+        Triple(4, 4, 3)
+    )
+    histoFinder.scanImage(
+        ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+    )
 
     /*
         TODO figure out proportions of waldo in images (i.e. find waldo and boundbox him
@@ -85,5 +119,6 @@ fun main(args: Array<String>) {
         "C:\Users\thade\Downloads\waldo\waldo-7.bmp"
      */
 
+    // 854, 560 is roughly where Waldo is in the trivial case
 }
 
