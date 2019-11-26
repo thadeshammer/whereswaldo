@@ -36,6 +36,14 @@ fun main(args: Array<String>) {
  * A database or at least some kind of disk write-out of test results so I can
  * track improvements on accuracy and exec time
  *
+ * Everything (models, samples, prepared target images) should be built up
+ * just like the Model/ModelComponent structures where the permutations are
+ * tracked and processed in the data structure (so we can reference the later,
+ * track metrics on them eventually, toggle them and rebake the model, maybe).
+ *
+ * More fully leveraging OpenImaj is definitely within scope here: its feature
+ * extraction would probably nail Waldo far better than my undergrad algorithm.
+ *
  */
 
 
