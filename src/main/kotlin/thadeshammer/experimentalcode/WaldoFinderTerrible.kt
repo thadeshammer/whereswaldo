@@ -11,7 +11,7 @@ import kotlin.system.measureTimeMillis
 /**
  * thade created on 11/24/2019
  */
-class WaldoFinder(
+class WaldoFinderTerrible(
     val model: Model
 ) {
     fun scanImage(image: MBFImage) {
@@ -67,10 +67,10 @@ class WaldoFinder(
 
     fun scanImageConcurrent(image: MBFImage) {
         /*
-            Stupidest way possible, just one thread and throwing one single core at it full-time.
+            Stupidest way possible.
 
             Because the model is pixel-for-pixel (no bluring/rotation/transformations) this will
-            only clock Waldo himself I think
+            only clock Waldo himself if it lands smack on him; classical over-fitting.
 
             I imagine this will result in a pretty large data structure. let's go every other
          */
@@ -86,8 +86,6 @@ class WaldoFinder(
         var scoreList = listOf<ScoreKeeper>()
         var mutex = Mutex()
 
-        var lastY = image.height
-
         val durationTotalTimeMS = measureTimeMillis {
             for (y in 0 until image.height-sampleHeight step 4) runBlocking {
                 for (x in 0 until image.width-sampleWidth step 4) {
@@ -96,16 +94,11 @@ class WaldoFinder(
 
                     mutex.withLock {
                         scoreList += ScoreKeeper(score, x, y, sampleWidth, sampleHeight)
-//                        if (y % 100 == 0 && lastY != y) {
-//                            println("$y")
-//                            lastY = y
-//                        }
                     }
                 }
             }
         }
 
-//        val trimmedScores = WaldoUtil.trimScoreList(scoreList.sortedBy { it.score })
         val trimmedScores = WaldoUtil.thoroughTrimScoreList(scoreList)
 
         val durationStr = String.format(

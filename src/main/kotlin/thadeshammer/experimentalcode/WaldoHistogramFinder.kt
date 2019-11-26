@@ -5,8 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.openimaj.feature.DoubleFVComparison
 import org.openimaj.image.MBFImage
-import org.openimaj.image.pixel.statistics.HistogramModel
-import org.openimaj.math.statistics.distribution.Histogram
+import org.openimaj.math.geometry.shape.Rectangle
 import org.openimaj.math.statistics.distribution.MultidimensionalHistogram
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
@@ -20,42 +19,31 @@ class WaldoHistogramFinder(
     private val sampleHeight: Int,
     private val histogramDimensions: Triple<Int, Int, Int>
 ) {
-    fun scanImage(image: MBFImage) {
-        val sampleBuffer = MBFImage(sampleWidth, sampleHeight) // no concern for colorspace?
+    fun scanImage(image: MBFImage, scanStep: Int = 4, wheresWaldo: Rectangle? = null) {
+        val sampleBuffer = MBFImage(sampleWidth, sampleHeight)
 
         var scoreList = listOf<ScoreKeeper>()
         var mutex = Mutex()
 
-        var lastY = image.height
-
         val durationTotalTimeMS = measureTimeMillis {
-            for (y in 0 until image.height-sampleHeight step 4) runBlocking {
-                for (x in 0 until image.width-sampleWidth step 4) {
+            for (y in 0..image.height-sampleHeight step scanStep) runBlocking {
+                for (x in 0..image.width-sampleWidth step scanStep) {
                     image.extractROI(x, y, sampleBuffer)
 
-                    val hm = HistogramModel(
-                        histogramDimensions.first,
-                        histogramDimensions.second,
-                        histogramDimensions.third
+                    val sampleHistogram = WaldoUtil.buildHistogram(
+                        sampleBuffer,
+                        histogramDimensions
                     )
-                    hm.estimateModel(sampleBuffer)
-                    val sampleHistogram = hm.histogram
 
                     // TODO parameterize compare mode
                     val score = modelHistogram.compare(sampleHistogram, DoubleFVComparison.EUCLIDEAN)
 
                     mutex.withLock {
                         scoreList += ScoreKeeper(score, x, y, sampleWidth, sampleHeight)
-//                        if (y % 100 == 0 && lastY != y) {
-//                            println("$y")
-//                            lastY = y
-//                        }
                     }
                 }
             }
         }
-
-        val trimmedScores = WaldoUtil.thoroughTrimScoreList(scoreList)
 
         val durationStr = String.format(
             "%d min, %d sec",
@@ -65,7 +53,28 @@ class WaldoHistogramFinder(
         )
 
         println ("Took $durationStr")
-        for (i in 0..20) {
+
+        var trimmedScores =
+            if (wheresWaldo != null) {
+                scoreList.filter {
+                    WaldoUtil.rectOverlap(
+                        Rectangle(
+                            it.x.toFloat(), it.y.toFloat(), it.width.toFloat(), it.height.toFloat()
+                        ),
+                        wheresWaldo
+                    )
+                }.sortedBy { it.score }
+            } else {
+                WaldoUtil.thoroughTrimScoreList(scoreList)
+            }
+
+        val limit = if (trimmedScores.size >= 20) {
+            20
+        } else {
+            trimmedScores.size
+        }
+
+        for (i in 0 until limit) {
             println("$i: ${trimmedScores[i]}")
         }
     }

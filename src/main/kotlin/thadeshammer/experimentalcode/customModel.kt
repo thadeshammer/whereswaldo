@@ -1,6 +1,5 @@
 package thadeshammer.experimentalcode
 
-import org.openimaj.image.FImage
 import org.openimaj.image.MBFImage
 import org.openimaj.image.processor.PixelProcessor
 

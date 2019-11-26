@@ -4,7 +4,6 @@ import org.openimaj.image.MBFImage
 import org.openimaj.image.pixel.statistics.HistogramModel
 import org.openimaj.image.processor.PixelProcessor
 import org.openimaj.math.geometry.shape.Rectangle
-import org.openimaj.math.statistics.distribution.Histogram
 import org.openimaj.math.statistics.distribution.MultidimensionalHistogram
 import kotlin.math.abs
 
@@ -67,12 +66,22 @@ object WaldoUtil {
     }
 
     fun thoroughTrimScoreList(scoreList: List<ScoreKeeper>): List<ScoreKeeper> {
+        if (scoreList.isEmpty()) {
+            return listOf()
+        } else if (scoreList.size == 1) {
+            return scoreList
+        }
+
         var xSort = trimScoreList(scoreList.sortedBy { it.x })
         var ySort = trimScoreList(xSort.sortedBy { it.y })
         return trimScoreList(ySort.sortedBy { it.score })
     }
 
     fun trimScoreList(sortedScoreList: List<ScoreKeeper>): List<ScoreKeeper> {
+        if (sortedScoreList.isEmpty()) {
+            return listOf()
+        }
+
         var trimmedScoreList: List<ScoreKeeper> = listOf()
 
         var localBest = sortedScoreList.first()
@@ -107,7 +116,9 @@ object WaldoUtil {
 
     fun runHistogramScan(sourceImage: MBFImage,
                          targetImage: MBFImage,
-                         histogramDimensions: Triple<Int, Int, Int>) {
+                         histogramDimensions: Triple<Int, Int, Int>,
+                         scanStep: Int = 4,
+                         wheresWaldo: Rectangle? = null) {
 
         val sourceImageMDH = buildHistogram(sourceImage, histogramDimensions)
 
@@ -118,6 +129,6 @@ object WaldoUtil {
             histogramDimensions
         )
 
-        histogramBasedFinder.scanImage(targetImage)
+        histogramBasedFinder.scanImage(targetImage, scanStep, wheresWaldo)
     }
 }
