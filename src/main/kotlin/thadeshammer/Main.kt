@@ -8,8 +8,11 @@ import java.io.File
 fun main(args: Array<String>) {
     println("Hello, World")
 
-    val waldoSourceImage = ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\wm2.bmp"))
-    val waldoTargetImage = ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+//    val waldoSourceImage = ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\wm2.bmp"))
+//    val waldoTargetImage = ImageUtilities.readMBF(File("C:\\Users\\thade\\Downloads\\waldo\\waldo-7.bmp"))
+
+    val waldoSourceImage = ImageUtilities.readMBF(File("wm2.bmp"))
+    val waldoTargetImage = ImageUtilities.readMBF(File("waldo-7.bmp"))
 
     ModelTestCases.trivialCasesModelVsModel(waldoSourceImage, waldoTargetImage)
     ModelTestCases.naiveRedBlueComponentCases(waldoSourceImage, waldoTargetImage)
